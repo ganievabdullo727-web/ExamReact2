@@ -46,20 +46,20 @@ export function Screen({ title, folder, description, action, children }: { title
   );
 }
 
-export function Field({ label, value = "", type = "text" }: { label: string; value?: string; type?: "text" | "email" | "date" }) {
+export function Field({ label, value = "", type = "text", previewEdit = false }: { label: string; value?: string; type?: "text" | "email" | "date"; previewEdit?: boolean }) {
   return (
     <label className="block min-w-0 space-y-2">
       <span className="block text-sm font-semibold text-copy">{label}</span>
-      <input className={field} type={type} defaultValue={value} disabled />
+      <input className={field} type={type} defaultValue={value} disabled={!previewEdit} />
     </label>
   );
 }
 
-export function SelectField({ label, value }: { label: string; value: string }) {
+export function SelectField({ label, value, choices = [] }: { label: string; value: string; choices?: string[] }) {
   return (
     <label className="block min-w-0 space-y-2">
       <span className="block text-sm font-semibold text-copy">{label}</span>
-      <select className={field} disabled><option>{value}</option></select>
+      <select className={field} defaultValue={value} disabled={!choices.length}>{(choices.length ? choices : [value]).map((choice) => <option key={choice}>{choice}</option>)}</select>
     </label>
   );
 }

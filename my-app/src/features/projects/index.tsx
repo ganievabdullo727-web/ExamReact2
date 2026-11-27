@@ -1,14 +1,18 @@
+import { PreviewDialog } from "@/shared/ui/PreviewDialog";
 import { Action, Badge, Field, Panel, Row, Screen, SelectField } from "@/shared/ui/Ui";
 
 export function ProjectsPage({ slug }: { slug: string }) {
   return (
-    <Screen title="Projects" folder="projects" description="Browse projects in this workspace." action={<Action>Create project</Action>}>
-      <div className="grid gap-5 lg:grid-cols-2">
-        <Panel title="Workspace projects"><Row title="TaskFlow Web" detail="Design and build the TaskFlow frontend." end={<Badge>WEB</Badge>} href={`/w/${slug}/p/web`} /></Panel>
-        <Panel title="New project" description="Preview of the fields for creating a project.">
-          <div className="space-y-4"><Field label="Project name" value="TaskFlow Web" /><Field label="Identifier" value="WEB" /><Action>Create</Action></div>
-        </Panel>
-      </div>
+    <Screen title="Projects" folder="projects" description="Browse projects in this workspace." action={
+      <PreviewDialog trigger="Create project" title="New project" description="This is a design preview. Project data is not saved.">
+        <Field label="Project name" value="TaskFlow Web" previewEdit />
+        <Field label="Identifier" value="WEB" previewEdit />
+        <Action>Create project</Action>
+      </PreviewDialog>
+    }>
+      <Panel title="Workspace projects">
+        <Row title="TaskFlow Web" detail="Design and build the TaskFlow frontend." end={<Badge>WEB</Badge>} href={`/w/${slug}/p/web`} />
+      </Panel>
     </Screen>
   );
 }

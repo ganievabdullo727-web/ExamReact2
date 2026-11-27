@@ -1,20 +1,18 @@
+import { PreviewDialog } from "@/shared/ui/PreviewDialog";
 import { Action, Badge, Brand, Field, Panel, Row, Screen, SelectField } from "@/shared/ui/Ui";
 
 export function WorkspacesPage() {
   return (
-    <Screen title="Workspaces" folder="workspaces" description="Choose a workspace or see how a new one is created.">
-      <div className="grid gap-5 lg:grid-cols-2">
-        <Panel title="Your workspaces" description="Continue with the example workspace.">
-          <Row title="TaskFlow" detail="Workspace preview" end={<Badge>Owner</Badge>} href="/w/taskflow" />
-        </Panel>
-        <Panel title="Create a workspace" description="The form is shown for design review only.">
-          <div className="space-y-4">
-            <Field label="Workspace name" value="TaskFlow" />
-            <Field label="Workspace slug" value="taskflow" />
-            <Action>Create workspace</Action>
-          </div>
-        </Panel>
-      </div>
+    <Screen title="Workspaces" folder="workspaces" description="Choose a workspace or see how a new one is created." action={
+      <PreviewDialog trigger="Create workspace" title="Create a workspace" description="Try the fields. This preview does not save a workspace.">
+        <Field label="Workspace name" value="TaskFlow" previewEdit />
+        <Field label="Workspace slug" value="taskflow" previewEdit />
+        <Action>Create workspace</Action>
+      </PreviewDialog>
+    }>
+      <Panel title="Your workspaces" description="Continue with the example workspace.">
+        <Row title="TaskFlow" detail="Workspace preview" end={<Badge>Owner</Badge>} href="/w/taskflow" />
+      </Panel>
     </Screen>
   );
 }
@@ -35,20 +33,26 @@ export function WorkspaceSettingsPage() {
   return (
     <Screen title="Workspace settings" folder="settings" description="Workspace details, access, and ownership.">
       <Panel title="General"><div className="grid gap-4 sm:grid-cols-2"><Field label="Workspace name" value="TaskFlow" /><Field label="Workspace slug" value="taskflow" /></div><div className="mt-5"><Action>Save changes</Action></div></Panel>
-      <Panel title="Ownership and access" description="These actions are disabled in the preview."><div className="flex flex-wrap gap-3"><Action quiet>Transfer ownership</Action><Action quiet>Leave workspace</Action><Action quiet>Delete workspace</Action></div></Panel>
+      <Panel title="Ownership and access" description="Preview only. No ownership or access changes are saved."><div className="flex flex-wrap gap-3"><Action quiet>Transfer ownership</Action><Action quiet>Leave workspace</Action><PreviewDialog quiet trigger="Delete workspace" title="Delete workspace?" description="This is a preview of the confirmation. Nothing will be deleted."><Action>Delete workspace</Action></PreviewDialog></div></Panel>
     </Screen>
   );
 }
 
 export function WorkspaceMembersPage() {
   return (
-    <Screen title="Workspace members" folder="members" description="See team members and how an invitation is composed.">
-      <div className="grid gap-5 lg:grid-cols-2">
-        <Panel title="People"><div className="space-y-3"><Row title="Alex Morgan" detail="alex@example.com" end={<Badge>Owner</Badge>} /><Row title="Jamie Lee" detail="jamie@example.com" end={<Badge tone="gray">Member</Badge>} /></div></Panel>
-        <Panel title="Invite by email" description="Preview of the invitation form. No email is sent.">
-          <div className="space-y-4"><Field label="Email address" type="email" value="name@example.com" /><SelectField label="Role" value="Member" /><Action>Send invitation</Action></div>
-        </Panel>
-      </div>
+    <Screen title="Workspace members" folder="members" description="See team members and their roles." action={
+      <PreviewDialog trigger="Invite by email" title="Invite a member" description="Try the form in the preview. No email is sent.">
+        <Field label="Email address" type="email" value="name@example.com" previewEdit />
+        <SelectField label="Role" value="Member" choices={["Admin", "Member", "Guest"]} />
+        <Action>Send invitation</Action>
+      </PreviewDialog>
+    }>
+      <Panel title="People">
+        <div className="space-y-3">
+          <Row title="Alex Morgan" detail="alex@example.com" end={<Badge>Owner</Badge>} />
+          <Row title="Jamie Lee" detail="jamie@example.com" end={<Badge tone="gray">Member</Badge>} />
+        </div>
+      </Panel>
     </Screen>
   );
 }

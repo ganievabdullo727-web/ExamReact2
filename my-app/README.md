@@ -7,3 +7,5 @@ From this folder: `npm ci`, then `npm run dev`. Start at [/workspaces](http://lo
 - `src/shared`: the shell, sidebar, topbar and shared visual components. Tailwind tokens are in `src/app/globals.css`.
 
 The example workspace is `taskflow`; the project is `web`. Buttons that would write data are disabled. No backend, authentication or issue implementation is included.
+
+Creation, invitation, and deletion dialogs are UI demos: they open and close, but never send or save anything.
