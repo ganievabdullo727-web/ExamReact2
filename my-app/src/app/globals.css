@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@theme {
+  --color-canvas: #F7F8FC;
+  --color-ink: #191B35;
+  --color-copy: #30334D;
+  --color-muted: #686C88;
+  --color-line: #E9EAF2;
+  --color-field: #FAFAFD;
+  --color-field-line: #E4E6F0;
+  --color-primary: #7059EE;
+  --color-primary-hover: #6049DE;
+  --shadow-panel: 0 12px 50px rgb(30 27 75 / 0.06);
+  --shadow-button: 0 6px 18px rgb(112 89 238 / 0.22);
+  --shadow-brand: 0 8px 24px rgb(112 89 238 / 0.25);
+}
