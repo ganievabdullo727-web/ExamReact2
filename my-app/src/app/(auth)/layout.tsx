@@ -1,5 +1,7 @@
-import type { ReactNode } from "react";
+import GuestGuard from "@/features/auth/components/GuestGuard";
 
-export default function Layout({ children }: { children: ReactNode }) {
-  return <main className="standalone">{children}</main>;
-}
+const AuthLayout = ({ children }: { children: React.ReactNode }) => {
+  return <GuestGuard>{children}</GuestGuard>;
+};
+
+export default AuthLayout;

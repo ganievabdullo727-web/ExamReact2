@@ -1,6 +1,6 @@
-import { redirect } from "next/navigation";
-import { workspaceUrl } from "@/app/_shared/lib/demo";
 
-export default function Page() {
-  redirect(workspaceUrl());
+import { redirect } from "next/navigation";
+
+export default function Home() {
+  redirect("/profile");
 }
