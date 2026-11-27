@@ -1,36 +1,76 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# TaskFlow
 
-## Getting Started
+TaskFlow — интерфейс для работы с проектами и задачами команды на Next.js App Router, React и TypeScript. Текущий этап — дизайн и навигация на общих тестовых данных.
 
-First, run the development server:
+## Локальный запуск
+
+Из каталога `ExamReact2/my-app`, где лежит `package.json`:
 
 ```bash
+npm ci
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Откройте [TaskFlow на localhost](http://localhost:3000) или адрес, который Next.js напечатает в терминале. Корневой маршрут перенаправит на обзор демо-пространства. Для просмотра демо переменные окружения не требуются.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Проверки:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run lint
+npm run build -- --webpack
+```
 
-## Learn More
+## Карта каталогов
 
-To learn more about Next.js, take a look at the following resources:
+```text
+my-app/
+├── public/                  Статические файлы
+├── src/
+│   └── app/
+│       ├── page.tsx         Переход на Overview
+│       ├── layout.tsx       Корневой каркас
+│       ├── globals.css     Общие стили
+│       ├── (auth)/          Вход и регистрация, свой page.tsx у каждого экрана
+│       ├── (dashboard)/     Профиль, пространства и общий каркас
+│       │   └── w/[slug]/    Overview и вложенные страницы
+│       │       └── p/[projectId]/  Проект, задачи, доска, циклы, модули и настройки
+│       ├── invite/[token]/  Предпросмотр приглашения
+│       └── _shared/         Меню, общие компоненты и тестовые данные
+├── README.md
+└── package.json
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Код каждого экрана находится в его собственном `page.tsx` внутри `src/app`. Например, приветствие и блок Projects на Overview находятся в `src/app/(dashboard)/w/[slug]/page.tsx`. Общие кнопки, поля, меню и повторяющиеся списки лежат в `src/app/_shared`. Там же в `lib/demo.ts` находятся тестовые данные. Колонки Kanban используют те же статусы, что и настройки проекта.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Маршруты
 
-## Deploy on Vercel
+В таблице **пространство** означает `/w/[slug]`, а **проект** — `/w/[slug]/p/[projectId]`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+| Маршрут | Экран |
+| --- | --- |
+| `/` | Переход в демо-пространство |
+| `/login`, `/register`, `/profile` | Вход, регистрация и профиль |
+| `/workspaces`, `/invite/[token]` | Список пространств и предпросмотр приглашения |
+| пространство, пространство + `/settings`, `/members`, `/notifications` | Обзор, настройки, участники и уведомления |
+| пространство + `/projects` | Список проектов |
+| проект, проект + `/settings`, `/settings/states`, `/settings/labels` | Обзор проекта, настройки, статусы и метки |
+| проект + `/issues`, `/issues/[issueId]`, `/board` | Список задач с поиском, карточка и Kanban |
+| проект + `/cycles`, `/cycles/[cycleId]`, `/modules`, `/modules/[moduleId]` | Списки и карточки циклов и модулей |
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Демо-сценарий: [обзор](http://localhost:3000/w/taskflow) → [проекты](http://localhost:3000/w/taskflow/projects) → [Website redesign](http://localhost:3000/w/taskflow/p/website) → [задачи](http://localhost:3000/w/taskflow/p/website/issues) → [WEB-024](http://localhost:3000/w/taskflow/p/website/issues/WEB-024).
+
+## Dev 2 — Абдулло
+
+- Общий адаптивный каркас и навигация в `src/app/_shared/layout`, базовые компоненты в `src/app/_shared/ui`, стили в `src/app/globals.css`.
+- Список рабочих пространств, Overview, настройки, участники, приглашения и уведомления.
+- Проекты, настройки проекта, статусы, метки, циклы и модули.
+
+## Dev 1 — партнёр
+
+- Страницы входа, регистрации и профиля.
+- Список задач, поиск, карточка и Kanban. Комментарии и вложения находятся на странице карточки задачи.
+- На этапе интеграции — общий API-клиент по контракту Swagger.
+
+## Что работает в демо
+
+Навигация открывает экраны, а поиск фильтрует тестовые задачи текущего проекта по названию или ID. Kanban показывает задачи по тестовым статусам. Формы входа, регистрации, профиля, настроек и приглашений служат для просмотра дизайна. Комментарии и вложения показаны как пустые состояния, у комментариев есть поле черновика. На этапе интеграции предстоит подключить авторизацию, сохранение данных и реальные запросы по Swagger.
