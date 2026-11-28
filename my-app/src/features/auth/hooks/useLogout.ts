@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { logoutUser } from "../api/auth.api";
 import { useAuthStore } from "../store/auth.store";
 
-export const useLogout = () => {
+export const useLogout = (destination = "/login") => {
   const router = useRouter();
   const queryClient = useQueryClient();
 
@@ -22,7 +22,7 @@ export const useLogout = () => {
       logout();
       queryClient.clear();
 
-      router.replace("/login");
+      router.replace(destination);
     },
   });
 };

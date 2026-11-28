@@ -1,46 +1,43 @@
+import { LogOut } from "lucide-react";
 
-import ProfileForms from "@/features/auth/components/ProfileForms";
 import LogoutButton from "@/features/auth/components/LogoutButton";
+import ProfileForms from "@/features/auth/components/ProfileForms";
 
 export default function ProfilePage() {
- 
-return (
-  <div className="min-h-screen bg-[#F7F8FC] px-5 py-8 sm:px-8 lg:px-12">
-      <ProfileForms />
-      <div className="mx-auto mt-8 flex w-full max-w-3xl flex-wrap items-center justify-between gap-5 rounded-2xl border border-red-100 bg-white px-7 py-6 shadow-[0_8px_30px_rgba(30,27,75,0.04)]">
-        <div className="flex items-center gap-4">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-red-50 text-red-500">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="21"
-              height="21"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M10 17l5-5-5-5" />
-              <path d="M15 12H3" />
-              <path d="M12 3h6a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3h-6" />
-            </svg>
+  return (
+    <section aria-labelledby="profile-page-title" className="mx-auto w-full max-w-5xl text-slate-900">
+      <header className="mb-7">
+        <h1 id="profile-page-title" className="text-2xl font-semibold tracking-tight sm:text-3xl">
+          Account settings
+        </h1>
+        <p className="mt-1.5 text-sm leading-6 text-slate-600">
+          Manage your personal information, password, and current session.
+        </p>
+      </header>
+
+      <div className="max-w-3xl space-y-5">
+        <ProfileForms />
+
+        <section
+          aria-labelledby="profile-session-title"
+          className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-sm shadow-slate-900/5 sm:px-6"
+        >
+          <div className="flex min-w-0 items-start gap-3">
+            <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-slate-100 text-slate-600">
+              <LogOut size={17} aria-hidden="true" />
+            </span>
+            <div>
+              <h2 id="profile-session-title" className="font-semibold text-slate-900">
+                Current session
+              </h2>
+              <p className="mt-0.5 text-sm text-slate-600">
+                Sign out of TaskFlow on this device.
+              </p>
+            </div>
           </div>
-
-          <div>
-            <h3 className="text-sm font-semibold text-[#191B35]">
-              Sign out of your account
-            </h3>
-
-            <p className="mt-1 text-xs text-[#898CA3]">
-              Securely end your current session
-            </p>
-          </div>
-        </div>
-
-        <LogoutButton />
+          <LogoutButton />
+        </section>
       </div>
-    </div>
-);
-
+    </section>
+  );
 }

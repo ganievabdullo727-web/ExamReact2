@@ -9,8 +9,14 @@ import { useLogin } from "../hooks/useLogin";
 import { useRouter } from "next/navigation";
 
 import Link from "next/link";
+import type { User } from "../api/auth.api";
 
-const LoginForm = () => {
+const LoginForm = ({ invite }: { invite?: {
+  email: string;
+  workspaceName: string;
+  registerHref: string;
+  onAuthenticated: (user: User) => void;
+} }) => {
   const loginMutation = useLogin();
   const router = useRouter();
 
@@ -20,14 +26,17 @@ const LoginForm = () => {
     formState: { errors },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
+    defaultValues: { email: invite?.email ?? "", password: "" },
   });
 
-  const onSubmit = (data: LoginFormData) => {
-    loginMutation.mutate(data, {
-      onSuccess: () => {
-        router.replace("/profile");
-      },
-    });
+  const onSubmit = async (data: LoginFormData) => {
+    try {
+      const { user } = await loginMutation.mutateAsync(data);
+      if (invite) invite.onAuthenticated(user);
+      else router.replace("/profile");
+    } catch {
+      // The mutation displays the error beneath the form.
+    }
   };
 
   return (
@@ -42,17 +51,20 @@ const LoginForm = () => {
           </h1>
 
           <p className="mt-2 text-sm text-[#898CA3]">
-            Sign in to your TaskFlow account
+            {invite ? `Sign in to join ${invite.workspaceName}` : "Sign in to your TaskFlow account"}
           </p>
         </div>
 
         <div className="space-y-2">
-          <label className="block text-sm font-semibold text-[#30334D]">
+          <label htmlFor="login-email" className="block text-sm font-semibold text-[#30334D]">
             Email address
           </label>
 
           <input
+            id="login-email"
             type="email"
+            autoComplete="email"
+            readOnly={Boolean(invite)}
             placeholder="Enter your email"
             {...register("email")}
             className="h-12 w-full rounded-xl border border-[#E4E6F0] bg-[#FAFAFD] px-4 text-sm text-[#191B35] outline-none transition-all duration-200 placeholder:text-[#A0A3B5] focus:border-[#7059EE] focus:bg-white focus:ring-4 focus:ring-[#7059EE]/10"
@@ -64,12 +76,14 @@ const LoginForm = () => {
         </div>
 
         <div className="space-y-2">
-          <label className="block text-sm font-semibold text-[#30334D]">
+          <label htmlFor="login-password" className="block text-sm font-semibold text-[#30334D]">
             Password
           </label>
 
           <input
+            id="login-password"
             type="password"
+            autoComplete="current-password"
             placeholder="Enter your password"
             {...register("password")}
             className="h-12 w-full rounded-xl border border-[#E4E6F0] bg-[#FAFAFD] px-4 text-sm text-[#191B35] outline-none transition-all duration-200 placeholder:text-[#A0A3B5] focus:border-[#7059EE] focus:bg-white focus:ring-4 focus:ring-[#7059EE]/10"
@@ -83,9 +97,10 @@ const LoginForm = () => {
         </div>
         <div className="border-t border-slate-100 pt-6 text-center">
           <p className="text-sm text-[#898CA3]">
-            Don't have an account?{" "}
+            Don&apos;t have an account?{" "}
             <Link
-              href="/register"
+              href={invite?.registerHref ?? "/register"}
+              prefetch={invite ? false : undefined}
               className="font-semibold text-[#7059EE] transition-colors hover:text-[#6049DE] hover:underline"
             >
               Sign up
@@ -101,7 +116,7 @@ const LoginForm = () => {
         </button>
 
         {loginMutation.isError && (
-          <p className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-center text-sm text-red-600">
+          <p role="alert" className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-center text-sm text-red-600">
             Login failed. Check your credentials.
           </p>
         )}
