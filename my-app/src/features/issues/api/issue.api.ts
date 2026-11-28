@@ -3,14 +3,38 @@ import type { User } from "@/features/auth/api/auth.api";
 import type { ProjectLabel } from "@/features/projects/labels/api/label.api";
 import { api } from "@/shared/api/client";
 
-export const issuePriorities = ["none", "low", "medium", "high", "urgent"] as const;
+export const issuePriorities = [
+  "none",
+  "low",
+  "medium",
+  "high",
+  "urgent",
+] as const;
+
 export type IssuePriority = (typeof issuePriorities)[number];
-type IssueAssignee = { user_id: string; user: Pick<User, "id" | "email" | "display_name" | "avatar_url"> };
-type IssueLabel = { label_id: string; label: ProjectLabel };
-export const issueSortFields = ["created_at", "updated_at", "priority", "due_date", "sort_order"] as const;
+
+type IssueAssignee = {
+  user_id: string;
+  user: Pick<User, "id" | "email" | "display_name" | "avatar_url">;
+};
+
+type IssueLabel = {
+  label_id: string;
+  label: ProjectLabel;
+};
+
+export const issueSortFields = [
+  "created_at",
+  "updated_at",
+  "priority",
+  "due_date",
+  "sort_order",
+] as const;
+
 export const issueGroupFields = ["state", "priority", "assignee"] as const;
-export type IssueGroupBy = (typeof issueGroupFields)[number];
+
 export type IssueSortBy = (typeof issueSortFields)[number];
+export type IssueGroupBy = (typeof issueGroupFields)[number];
 
 export type Issue = {
   id: string;
@@ -56,7 +80,10 @@ export type IssueListFilters = {
   parent_id?: string;
 };
 
-export type IssueGroup = { key: string | null; issues: Issue[] };
+export type IssueGroup = {
+  key: string | null;
+  issues: Issue[];
+};
 
 export type CreateIssueData = {
   title: string;
@@ -71,42 +98,87 @@ export type CreateIssueData = {
   estimate_points?: number;
 };
 
-export type UpdateIssueData = Partial<Pick<
-  Issue,
-  "title" | "description" | "state_id" | "priority" | "parent_id"
-    | "start_date" | "due_date" | "estimate_points" | "sort_order"
->>;
+export type UpdateIssueData = {
+  title?: Issue["title"];
+  description?: Issue["description"];
+  state_id?: Issue["state_id"];
+  priority?: Issue["priority"];
+  parent_id?: Issue["parent_id"];
+  start_date?: Issue["start_date"];
+  due_date?: Issue["due_date"];
+  estimate_points?: Issue["estimate_points"];
+  sort_order?: Issue["sort_order"];
+};
 
 export const getIssueError = (error: unknown, fallback: string): string => {
   if (axios.isAxiosError<{ error?: { message?: unknown } }>(error)) {
     const message = error.response?.data?.error?.message;
-    if (typeof message === "string" && message.trim()) return message;
+
+    if (typeof message === "string" && message.trim()) {
+      return message;
+    }
   }
 
   return fallback;
 };
 
-const issuesPath = (slug: string, projectId: string) =>
-  `/v1/workspaces/${encodeURIComponent(slug)}/projects/${encodeURIComponent(projectId)}/issues`;
+const issuesPath = (slug: string, projectId: string) => {
+  const workspace = encodeURIComponent(slug);
+  const project = encodeURIComponent(projectId);
 
-const issuePath = (slug: string, projectId: string, issueId: string) =>
-  `${issuesPath(slug, projectId)}/${encodeURIComponent(issueId)}`;
+  return `/v1/workspaces/${workspace}/projects/${project}/issues`;
+};
+
+const issuePath = (slug: string, projectId: string, issueId: string) => {
+  const id = encodeURIComponent(issueId);
+
+  return `${issuesPath(slug, projectId)}/${id}`;
+};
 
 export type IssueAssignmentChange =
-  | { kind: "assignees"; action: "add" | "remove"; id: string }
-  | { kind: "labels"; action: "add" | "remove"; id: string };
+  | {
+      kind: "assignees";
+      action: "add" | "remove";
+      id: string;
+    }
+  | {
+      kind: "labels";
+      action: "add" | "remove";
+      id: string;
+    };
 
 export const changeIssueAssignment = async (
   slug: string,
   projectId: string,
   issueId: string,
-  { kind, action, id }: IssueAssignmentChange,
+  change: IssueAssignmentChange,
 ): Promise<Issue> => {
-  const path = `${issuePath(slug, projectId, issueId)}/${kind}`;
-  const { data } = action === "add"
-    ? await api.post<Issue>(path, kind === "assignees" ? { user_id: id } : { label_id: id })
-    : await api.delete<Issue>(`${path}/${encodeURIComponent(id)}`);
-  if (data.id !== issueId) throw new Error("The response did not match this issue.");
+  const path = `${issuePath(slug, projectId, issueId)}/${change.kind}`;
+
+  let data: Issue;
+
+  if (change.action === "add") {
+    let body: { user_id: string } | { label_id: string };
+
+    if (change.kind === "assignees") {
+      body = { user_id: change.id };
+    } else {
+      body = { label_id: change.id };
+    }
+
+    const response = await api.post<Issue>(path, body);
+    data = response.data;
+  } else {
+    const id = encodeURIComponent(change.id);
+    const response = await api.delete<Issue>(`${path}/${id}`);
+
+    data = response.data;
+  }
+
+  if (data.id !== issueId) {
+    throw new Error("The response did not match this issue.");
+  }
+
   return normalizeIssue(data, projectId);
 };
 
@@ -115,19 +187,32 @@ function normalizeIssue(issue: Issue, projectId: string): Issue {
     throw new Error("The issue does not belong to this project.");
   }
 
-  const assignees = (issue.assignees ?? []).filter((row) => row?.user_id && row.user?.id);
-  const labels = (issue.labels ?? []).filter((row) => row?.label_id && row.label?.id);
+  const assignees = (issue.assignees ?? []).filter((row) => {
+    return Boolean(row?.user_id && row.user?.id);
+  });
+
+  const labels = (issue.labels ?? []).filter((row) => {
+    return Boolean(row?.label_id && row.label?.id);
+  });
+
   return {
     ...issue,
-    assignees,
-    labels,
+    assignees: assignees,
+    labels: labels,
     assigneesUnavailable: assignees.length !== issue.assignees?.length,
     labelsUnavailable: labels.length !== issue.labels?.length,
   };
 }
 
 function issueListParams(filters: IssueListFilters) {
-  return { sort_by: "created_at", order: "desc", ...filters, search: filters.search?.trim() || undefined };
+  const params = {
+    sort_by: "created_at",
+    order: "desc",
+    ...filters,
+    search: filters.search?.trim() || undefined,
+  };
+
+  return params;
 }
 
 export const getIssues = async (
@@ -137,24 +222,69 @@ export const getIssues = async (
   cursor?: string,
   signal?: AbortSignal,
 ): Promise<IssuePage> => {
-  const { data } = await api.get<IssuePage>(`${issuesPath(slug, projectId)}/`, {
-    signal,
-    params: { ...issueListParams(filters), cursor, limit: 25 },
-    paramsSerializer: { indexes: null },
+  const response = await api.get<IssuePage>(`${issuesPath(slug, projectId)}/`, {
+    signal: signal,
+    params: {
+      ...issueListParams(filters),
+      cursor: cursor,
+      limit: 25,
+    },
+    paramsSerializer: {
+      indexes: null,
+    },
   });
-  return { ...data, data: data.data.map((issue) => normalizeIssue(issue, projectId)) };
+
+  const data = response.data;
+
+  const issues = data.data.map((issue) => {
+    return normalizeIssue(issue, projectId);
+  });
+
+  return {
+    ...data,
+    data: issues,
+  };
 };
 
 export const getGroupedIssues = async (
-  slug: string, projectId: string, filters: IssueListFilters, groupBy: IssueGroupBy, signal?: AbortSignal,
+  slug: string,
+  projectId: string,
+  filters: IssueListFilters,
+  groupBy: IssueGroupBy,
+  signal?: AbortSignal,
 ): Promise<IssueGroup[]> => {
-  const { data } = await api.get<{ group_by: IssueGroupBy; groups: IssueGroup[] }>(`${issuesPath(slug, projectId)}/`, {
-    signal,
-    params: { ...issueListParams(filters), group_by: groupBy },
-    paramsSerializer: { indexes: null },
+  const response = await api.get<{
+    group_by: IssueGroupBy;
+    groups: IssueGroup[];
+  }>(`${issuesPath(slug, projectId)}/`, {
+    signal: signal,
+    params: {
+      ...issueListParams(filters),
+      group_by: groupBy,
+    },
+    paramsSerializer: {
+      indexes: null,
+    },
   });
-  if (data.group_by !== groupBy) throw new Error("The response did not match the requested grouping.");
-  return data.groups.map((group) => ({ ...group, issues: group.issues.map((issue) => normalizeIssue(issue, projectId)) }));
+
+  const data = response.data;
+
+  if (data.group_by !== groupBy) {
+    throw new Error("The response did not match the requested grouping.");
+  }
+
+  const groups = data.groups.map((group) => {
+    const issues = group.issues.map((issue) => {
+      return normalizeIssue(issue, projectId);
+    });
+
+    return {
+      ...group,
+      issues: issues,
+    };
+  });
+
+  return groups;
 };
 
 export const getIssue = async (
@@ -163,8 +293,11 @@ export const getIssue = async (
   issueId: string,
   signal?: AbortSignal,
 ): Promise<Issue> => {
-  const { data } = await api.get<Issue>(issuePath(slug, projectId, issueId), { signal });
-  return normalizeIssue(data, projectId);
+  const response = await api.get<Issue>(issuePath(slug, projectId, issueId), {
+    signal: signal,
+  });
+
+  return normalizeIssue(response.data, projectId);
 };
 
 export const createIssue = async (
@@ -172,11 +305,12 @@ export const createIssue = async (
   projectId: string,
   issue: CreateIssueData,
 ): Promise<Issue> => {
-  const { data } = await api.post<Issue>(`${issuesPath(slug, projectId)}/`, {
+  const response = await api.post<Issue>(`${issuesPath(slug, projectId)}/`, {
     ...issue,
     priority: issue.priority ?? "none",
   });
-  return normalizeIssue(data, projectId);
+
+  return normalizeIssue(response.data, projectId);
 };
 
 export const updateIssue = async (
@@ -185,10 +319,18 @@ export const updateIssue = async (
   issueId: string,
   issue: UpdateIssueData,
 ): Promise<Issue> => {
-  const { data } = await api.patch<Issue>(issuePath(slug, projectId, issueId), issue);
-  return normalizeIssue(data, projectId);
+  const response = await api.patch<Issue>(
+    issuePath(slug, projectId, issueId),
+    issue,
+  );
+
+  return normalizeIssue(response.data, projectId);
 };
 
-export const deleteIssue = async (slug: string, projectId: string, issueId: string): Promise<void> => {
+export const deleteIssue = async (
+  slug: string,
+  projectId: string,
+  issueId: string,
+): Promise<void> => {
   await api.delete(issuePath(slug, projectId, issueId));
 };
