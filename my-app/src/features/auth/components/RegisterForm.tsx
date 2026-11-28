@@ -3,14 +3,22 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
+import { isAxiosError } from "axios";
 
 import { registerSchema, type RegisterFormData } from "../schemas/auth.schema";
 
 import { useRegister } from "../hooks/useRegister";
+import type { User } from "../api/auth.api";
 
 import Link from "next/link";
 
-const RegisterForm = () => {
+const RegisterForm = ({ invite }: { invite?: {
+  token: string;
+  email: string;
+  workspaceName: string;
+  loginHref: string;
+  onAuthenticated: (user: User) => void;
+} }) => {
   const router = useRouter();
   const registerMutation = useRegister();
 
@@ -20,15 +28,21 @@ const RegisterForm = () => {
     formState: { errors },
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
+    defaultValues: { email: invite?.email ?? "", display_name: "", password: "" },
   });
 
-  const onSubmit = (data: RegisterFormData) => {
-    registerMutation.mutate(data, {
-      onSuccess: () => {
-        router.replace("/profile");
-      },
-    });
+  const onSubmit = async (data: RegisterFormData) => {
+    try {
+      const { user } = await registerMutation.mutateAsync(invite ? { ...data, email: invite.email, invite_token: invite.token } : data);
+      if (invite) invite.onAuthenticated(user);
+      else router.replace("/profile");
+    } catch {
+      // The mutation displays the error beneath the form.
+    }
   };
+  const registrationError = invite && isAxiosError<{ error?: { message?: string } }>(registerMutation.error)
+    ? registerMutation.error.response?.data?.error?.message
+    : undefined;
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#F7F8FC] px-4 py-10">
@@ -43,16 +57,18 @@ const RegisterForm = () => {
           </h1>
 
           <p className="mt-2 text-sm text-[#898CA3]">
-            Get started with your TaskFlow account
+            {invite ? `Create a TaskFlow account to join ${invite.workspaceName}` : "Get started with your TaskFlow account"}
           </p>
         </div>
 
         <div className="space-y-2">
-          <label className="block text-sm font-semibold text-[#30334D]">
+          <label htmlFor="register-name" className="block text-sm font-semibold text-[#30334D]">
             Full name
           </label>
 
           <input
+            id="register-name"
+            autoComplete="name"
             {...register("display_name")}
             placeholder="Enter your full name"
             className="h-12 w-full rounded-xl border border-[#E4E6F0] bg-[#FAFAFD] px-4 text-sm text-[#191B35] outline-none transition-all duration-200 placeholder:text-[#A0A3B5] focus:border-[#7059EE] focus:bg-white focus:ring-4 focus:ring-[#7059EE]/10"
@@ -66,13 +82,16 @@ const RegisterForm = () => {
         </div>
 
         <div className="space-y-2">
-          <label className="block text-sm font-semibold text-[#30334D]">
+          <label htmlFor="register-email" className="block text-sm font-semibold text-[#30334D]">
             Email address
           </label>
 
           <input
+            id="register-email"
             {...register("email")}
             type="email"
+            autoComplete="email"
+            readOnly={Boolean(invite)}
             placeholder="Enter your email"
             className="h-12 w-full rounded-xl border border-[#E4E6F0] bg-[#FAFAFD] px-4 text-sm text-[#191B35] outline-none transition-all duration-200 placeholder:text-[#A0A3B5] focus:border-[#7059EE] focus:bg-white focus:ring-4 focus:ring-[#7059EE]/10"
           />
@@ -83,13 +102,15 @@ const RegisterForm = () => {
         </div>
 
         <div className="space-y-2">
-          <label className="block text-sm font-semibold text-[#30334D]">
+          <label htmlFor="register-password" className="block text-sm font-semibold text-[#30334D]">
             Password
           </label>
 
           <input
+            id="register-password"
             {...register("password")}
             type="password"
+            autoComplete="new-password"
             placeholder="Create a password"
             className="h-12 w-full rounded-xl border border-[#E4E6F0] bg-[#FAFAFD] px-4 text-sm text-[#191B35] outline-none transition-all duration-200 placeholder:text-[#A0A3B5] focus:border-[#7059EE] focus:bg-white focus:ring-4 focus:ring-[#7059EE]/10"
           />
@@ -105,7 +126,8 @@ const RegisterForm = () => {
         <p className="text-sm text-[#898CA3]">
           Already have an account?{" "}
           <Link
-            href="/login"
+            href={invite?.loginHref ?? "/login"}
+            prefetch={invite ? false : undefined}
             className="font-semibold text-[#7059EE] transition-colors hover:text-[#6049DE] hover:underline"
           >
             Sign in
@@ -122,8 +144,8 @@ const RegisterForm = () => {
         </button>
 
         {registerMutation.isError && (
-          <p className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-center text-sm text-red-600">
-            Registration failed
+          <p role="alert" className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-center text-sm text-red-600">
+            {registrationError ?? "Registration failed"}
           </p>
         )}
       </form>

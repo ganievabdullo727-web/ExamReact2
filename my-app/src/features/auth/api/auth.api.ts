@@ -30,6 +30,7 @@ export type RegisterData = {
   email: string;
   password: string;
   display_name: string;
+  invite_token?: string;
 };
 
 
@@ -75,8 +76,8 @@ export const refreshToken = async (): Promise<RefreshResponse> => {
   return data;
 };
 
-export const registerUser = async (user: RegisterData) => {
-  const { data } = await api.post("/v1/auth/register", user);
+export const registerUser = async (user: RegisterData): Promise<LoginResponse> => {
+  const { data } = await api.post<LoginResponse>("/v1/auth/register", user);
 
   return data;
 };
